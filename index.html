@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Calendario de Clases</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        .slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        body { transition: background-color 0.3s, color 0.3s; }
+        .dark-transition { transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex justify-center h-screen w-full text-gray-800 dark:text-gray-200">
+
+    <div id="app-container" class="w-full max-w-md bg-gray-50 dark:bg-gray-900 h-full flex flex-col font-sans relative overflow-hidden shadow-2xl dark-transition">
+        
+        <!-- SIDEBAR -->
+        <div id="sidebar-overlay" class="absolute inset-0 bg-black/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        
+        <div id="sidebar" class="absolute top-0 left-0 h-full w-3/4 max-w-[280px] bg-white dark:bg-gray-800 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl dark-transition">
+            <div class="bg-indigo-600 dark:bg-indigo-800 p-6 text-white dark-transition">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 text-2xl font-bold">
+                    🎓
+                </div>
+                <h2 class="text-xl font-bold">Menú Principal</h2>
+                <p class="text-indigo-200 text-sm">Semestre 2026-I</p>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto py-4">
+                <div class="px-4 mb-2 text-xs font-bold text-gray-400 uppercase tracking-widest">General</div>
+                <ul class="space-y-1 px-3 mb-6">
+                    <li>
+                        <button onclick="openAttendanceDashboard()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-left">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-500"></i>
+                            <span class="font-bold">Mi Asistencia</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="px-4 mb-2 text-xs font-bold text-gray-400 uppercase tracking-widest">Cursos</div>
+                <ul class="space-y-1 px-3">
+                    <li>
+                        <button onclick="openCourseDetails('medicina-interna')" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-left text-sm">
+                            <i data-lucide="stethoscope" class="w-4 h-4 text-indigo-400"></i>
+                            <span>Medicina Interna II</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="openCourseDetails('practica-clinica')" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-left text-sm">
+                            <i data-lucide="activity" class="w-4 h-4 text-green-400"></i>
+                            <span>Práctica Clínica Veterinaria II</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="openCourseDetails('topicos-selectos')" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-left text-sm">
+                            <i data-lucide="layers" class="w-4 h-4 text-orange-400"></i>
+                            <span>Tópicos Selectos</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="openCourseDetails('trabajo-academico')" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-left text-sm">
+                            <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
+                            <span>Trabajo Académico II</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700 space-y-4 dark-transition">
+                <div class="flex items-center justify-between px-2">
+                    <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <i data-lucide="moon" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">Modo Oscuro</span>
+                    </div>
+                    <button id="btn-toggle-theme" class="w-12 h-6 rounded-full bg-gray-300 dark:bg-indigo-600 relative transition-colors focus:outline-none">
+                        <div id="theme-toggle-knob" class="w-4 h-4 rounded-full bg-white absolute top-1 left-1 transform transition-transform dark:translate-x-6"></div>
+                    </button>
+                </div>
+                
+                <button id="btn-close-sidebar" class="w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    Cerrar Menú
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD ASISTENCIA -->
+        <div id="attendance-dashboard-view" class="absolute inset-0 bg-gray-50 dark:bg-gray-900 z-40 transform translate-x-full transition-transform duration-300 flex flex-col dark-transition">
+            <div class="bg-indigo-600 dark:bg-indigo-800 text-white p-4 flex items-center gap-3 shadow-md shrink-0 dark-transition">
+                <button id="btn-back-attendance" class="p-2 -ml-2 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <h2 class="text-lg font-bold">Resumen de Asistencia</h2>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-green-500 text-white rounded-2xl p-4 shadow-lg shadow-green-500/20">
+                        <p class="text-[10px] uppercase font-bold opacity-80">Total Asistencias</p>
+                        <p id="total-present-count" class="text-3xl font-black">0</p>
+                    </div>
+                    <div class="bg-red-500 text-white rounded-2xl p-4 shadow-lg shadow-red-500/20">
+                        <p class="text-[10px] uppercase font-bold opacity-80">Total Faltas</p>
+                        <p id="total-absent-count" class="text-3xl font-black">0</p>
+                    </div>
+                </div>
+
+                <div id="attendance-cards-container" class="space-y-4 pt-2">
+                    <!-- Tarjetas de asistencia se generan aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- DETALLES DEL CURSO -->
+        <div id="course-details-view" class="absolute inset-0 bg-gray-50 dark:bg-gray-900 z-40 transform translate-x-full transition-transform duration-300 flex flex-col dark-transition">
+            <div class="bg-indigo-600 dark:bg-indigo-800 text-white p-4 flex items-center gap-3 shadow-md shrink-0 dark-transition">
+                <button id="btn-back-course" class="p-2 -ml-2 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <h2 id="course-view-title" class="text-lg font-bold truncate">Detalles del Curso</h2>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 dark-transition">
+                    <h3 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 border-b dark:border-gray-700 pb-2">Datos Generales</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="user" class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">Profesor Coordinador</p>
+                                <p id="course-view-prof" class="font-semibold text-gray-800 dark:text-gray-200">Cargando...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="clock" class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">Créditos / Horas</p>
+                                <p id="course-view-credits" class="font-semibold text-gray-800 dark:text-gray-200">Cargando...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="hash" class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">Código</p>
+                                <p id="course-view-code" class="font-semibold text-gray-800 dark:text-gray-200">Cargando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 dark-transition">
+                    <h3 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 border-b dark:border-gray-700 pb-2">Contenidos del Curso</h3>
+                    <ul id="course-view-contents" class="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-justify">
+                        <li>Cargando...</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 mb-6 dark-transition">
+                    <h3 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 border-b dark:border-gray-700 pb-2">Tabla de Evaluación</h3>
+                    <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Actividad</th>
+                                    <th class="px-4 py-3 font-medium text-right w-20">Peso</th>
+                                </tr>
+                            </thead>
+                            <tbody id="course-view-eval-table" class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEADER Y CONTADOR -->
+        <div class="bg-indigo-600 dark:bg-indigo-800 text-white rounded-b-3xl p-6 shadow-lg z-10 shrink-0 dark-transition">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-1">
+                    <button id="btn-open-sidebar" class="p-2 -ml-2 rounded-full hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <h1 class="text-xl font-bold flex items-center gap-2 ml-1">
+                        Mi Semestre
+                    </h1>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <select id="user-group-select" class="bg-indigo-700 dark:bg-indigo-600 text-indigo-100 text-sm font-semibold rounded-lg px-2 py-1.5 border-none outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer appearance-none text-center transition-colors">
+                        <option value="A">Grupo A</option>
+                        <option value="B">Grupo B</option>
+                    </select>
+
+                    <button id="btn-notifications" class="p-2 rounded-full transition-colors bg-indigo-800 dark:bg-indigo-900 text-gray-300 hover:bg-indigo-700 dark:hover:bg-indigo-700" title="Notificaciones">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white/10 dark:bg-black/20 rounded-2xl p-4 backdrop-blur-sm border border-white/20 dark:border-white/10 transition-colors">
+                <p class="text-indigo-100 dark:text-indigo-200 text-sm mb-1 uppercase tracking-wider font-semibold">Próxima Clase</p>
+                <div id="countdown-text" class="text-3xl font-mono font-bold tracking-tight mb-3">
+                    Calculando...
+                </div>
+                
+                <div id="next-class-info" class="bg-white/20 dark:bg-black/30 rounded-xl p-3 text-sm hidden transition-all">
+                    <div id="next-class-title" class="font-semibold text-lg truncate">Cargando...</div>
+                    <div class="flex items-center gap-4 mt-2 text-indigo-100 dark:text-indigo-200">
+                        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> <span id="next-class-time">--:--</span></span>
+                        <span class="flex items-center gap-1">
+                            <span id="next-class-icon"></span>
+                            <span id="next-class-type" class="capitalize">--</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALENDARIO -->
+        <div class="flex-1 p-4 overflow-y-auto no-scrollbar">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-4 dark-transition">
+                <div class="flex justify-between items-center mb-4 px-2">
+                    <button id="btn-prev-month" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <h2 id="month-year-display" class="text-lg font-bold text-gray-800 dark:text-gray-100"></h2>
+                    <button id="btn-next-month" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Do</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Lu</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Ma</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Mi</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Ju</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Vi</div>
+                    <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Sa</div>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+
+                <div class="mt-6 flex flex-wrap justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Virtual</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-green-500"></div> Presencial</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div> Otro grupo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DETALLES DEL DÍA -->
+        <div id="modal-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-end sm:items-center sm:justify-center hidden fade-in max-w-md mx-auto">
+            <div id="modal-content" class="bg-gray-50 dark:bg-gray-900 w-full rounded-t-3xl sm:rounded-3xl p-6 slide-up h-[80vh] flex flex-col dark-transition">
+                <div class="flex justify-between items-center mb-6 shrink-0">
+                    <h3 id="modal-date-title" class="text-xl font-bold text-gray-800 dark:text-gray-100">Clases del día</h3>
+                    <button id="btn-close-modal" class="p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="modal-classes-list" class="space-y-4 overflow-y-auto no-scrollbar flex-1 pb-4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- ALMACENAMIENTO ---
+        const Storage = {
+            getGroup: () => localStorage.getItem('userGroup') || 'A',
+            setGroup: (group) => localStorage.setItem('userGroup', group),
+            getTheme: () => localStorage.getItem('theme') || 'light',
+            setTheme: (theme) => localStorage.setItem('theme', theme),
+            getAttendance: () => JSON.parse(localStorage.getItem('attendance')) || {},
+            saveAttendance: (classId, status) => {
+                const data = Storage.getAttendance();
+                if (data[classId] === status) delete data[classId];
+                else data[classId] = status;
+                localStorage.setItem('attendance', JSON.stringify(data));
+                return data;
+            }
+        };
+
+        // --- TEMA ---
+        const htmlElement = document.documentElement;
+        const btnToggleTheme = document.getElementById('btn-toggle-theme');
+        let currentTheme = Storage.getTheme();
+        function applyTheme(theme) {
+            if (theme === 'dark') htmlElement.classList.add('dark');
+            else htmlElement.classList.remove('dark');
+            Storage.setTheme(theme);
+        }
+        applyTheme(currentTheme);
+        btnToggleTheme.onclick = () => {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(currentTheme);
+        };
+
+        // --- CURSOS (NOMBRES OFICIALES) ---
+        const coursesData = {
+            'medicina-interna': {
+                name: 'Medicina Interna II',
+                code: 'V914',
+                credits: '4.0 (80 Horas)',
+                professor: 'MV. Ricardo Grandez Rodriguez',
+                contents: ['I: Sistema Endocrino', 'II: Sistema Reproductivo', 'III: Sistema Osteoarticular', 'IV: Oftalmología'],
+                evaluations: [{ activity: 'Unidad I', weight: '20%' }, { activity: 'Unidad II', weight: '20%' }, { activity: 'Unidad III', weight: '20%' }, { activity: 'Unidad IV', weight: '20%' }, { activity: 'Seminarios', weight: '20%' }]
+            },
+            'practica-clinica': {
+                name: 'Práctica Clínica Veterinaria II',
+                code: 'V920',
+                credits: '96 Horas Prácticas',
+                professor: 'MV. Yurie Arias / MV. Ricardo Grandez',
+                contents: ['Gestión clínica integral', 'Emergencias', 'Diagnóstico', 'Cirugía'],
+                evaluations: [{ activity: 'Desempeño', weight: '60%' }, { activity: 'Artículos', weight: '40%' }]
+            },
+            'topicos-selectos': {
+                name: 'Tópicos Selectos',
+                code: 'V918',
+                credits: '60 Horas Teóricas',
+                professor: 'Claudia Miguel / Renzo Limas',
+                contents: ['I: Dermatología', 'II: Oncología', 'III: Exóticos', 'IV: Hematología'],
+                evaluations: [{ activity: 'Unidad I', weight: '25%' }, { activity: 'Unidad II', weight: '25%' }, { activity: 'Unidad III', weight: '25%' }, { activity: 'Unidad IV', weight: '25%' }]
+            },
+            'trabajo-academico': {
+                name: 'Trabajo Académico II',
+                code: 'V916',
+                credits: '2.0 (48 Horas)',
+                professor: 'Mg. Ricardo Grandez Rodríguez',
+                contents: ['Metodología', 'Lista de problemas', 'Diagnóstico diferencial', 'Plan terapéutico'],
+                evaluations: [{ activity: 'Inf 1', weight: '20%' }, { activity: 'Inf 2', weight: '25%' }, { activity: 'Inf 3', weight: '25%' }, { activity: 'Inf 4', weight: '30%' }]
+            }
+        };
+
+        // --- CRONOGRAMA (TÍTULOS ESTANDARIZADOS) ---
+        const mockClasses = [
+            // MEDICINA INTERNA II
+            { id: 500, title: 'Medicina Interna II', date: '2026-03-27', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Patofisiolgia del Sistema Endocrino', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 501, title: 'Medicina Interna II', date: '2026-03-30', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Diagnóstico, manejo, tratamiento y seguimiento de Cushing...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 502, title: 'Medicina Interna II', date: '2026-04-01', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Diabetes mellitus canina y felina aproximación y dxco', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 503, title: 'Medicina Interna II', date: '2026-04-01', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Diabetes Mellitus manejo médico y alimentario, emergencias', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 504, title: 'Medicina Interna II', date: '2026-04-06', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Aproximacion al hipotiroidismo caninos, diagnóstico y manejo', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 505, title: 'Medicina Interna II', date: '2026-04-08', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Hiperaldosterimo felino', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 506, title: 'Medicina Interna II', date: '2026-04-08', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Insulinoma en pacientes geriátricos', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 507, title: 'Medicina Interna II', date: '2026-04-10', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Insulinoma en pacientes no geriátricos', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 508, title: 'EXAMEN UNIDAD I - Medicina Interna II', date: '2026-04-19', startTime: '09:00', endTime: '11:00', type: 'presencial', topic: 'Evaluación Teórica Unidad I', teacher: 'C. Miguel', group: 'Ambos' },
+            { id: 509, title: 'Medicina Interna II', date: '2026-04-29', startTime: '18:00', endTime: '22:00', type: 'virtual', topic: 'Fisiologia de la reproducción canina y felina', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 510, title: 'Medicina Interna II', date: '2026-05-04', startTime: '18:00', endTime: '22:00', type: 'virtual', topic: 'Patologías frecuentes en hembras...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 511, title: 'Medicina Interna II', date: '2026-05-05', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Patologías frecuentes en machos...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 512, title: 'Medicina Interna II', date: '2026-05-06', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: '¿Monta o inseminación?', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 513, title: 'Medicina Interna II', date: '2026-05-06', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Control del desarrollo gestacionario y alteraciones...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 514, title: 'Medicina Interna II', date: '2026-05-09', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Neoplasias reproductivas', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 515, title: 'Medicina Interna II', date: '2026-05-17', startTime: '08:00', endTime: '12:00', type: 'virtual', topic: 'Evaluación reproductiva del macho y la hembra', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 516, title: 'EXAMEN UNIDAD II - Medicina Interna II', date: '2026-05-24', startTime: '09:00', endTime: '11:00', type: 'virtual', topic: 'Evaluación Teórica Unidad II', teacher: 'C. Miguel', group: 'Ambos' },
+            { id: 517, title: 'Medicina Interna II', date: '2026-05-28', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Osteopatias del desarrollo en caninos y felinos...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 518, title: 'Medicina Interna II', date: '2026-05-30', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Enfermedad degenerativa articular canina y felina...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 519, title: 'Medicina Interna II', date: '2026-06-01', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Osteomelitis en caninos y felinos...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 520, title: 'Medicina Interna II', date: '2026-06-01', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Alteraciones articulares en animales jóvenes', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 521, title: 'Medicina Interna II', date: '2026-06-03', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Alteraciones ostearticulares de columna vertebral', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 522, title: 'Medicina Interna II', date: '2026-06-03', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Manejo del TPLO', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 523, title: 'Medicina Interna II', date: '2026-06-08', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Manejo médico del dolor crónico', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 524, title: 'Medicina Interna II', date: '2026-06-11', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Terapias Alternas, rehabilitación física', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 525, title: 'EXAMEN UNIDAD III - Medicina Interna II', date: '2026-06-13', startTime: '09:00', endTime: '11:00', type: 'virtual', topic: 'Evaluación Teórica Unidad III', teacher: 'C. Miguel', group: 'Ambos' },
+            { id: 526, title: 'Medicina Interna II', date: '2026-06-18', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Técnicas complementarias de exploración ocular...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 527, title: 'Medicina Interna II', date: '2026-06-22', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Afecciones médicas y quirúrgicas de esclera, cornea...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 528, title: 'Medicina Interna II', date: '2026-06-24', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Alteraciones de cristalino, signos y manejo', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 529, title: 'Medicina Interna II', date: '2026-06-24', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Fondo de ojo, variaciones fisiológicas y patológicas', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 530, title: 'Medicina Interna II', date: '2026-06-26', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Tto médico y quirúrgico de enfermedades orbitarias...', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 531, title: 'Medicina Interna II', date: '2026-06-26', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Glaucoma: Tipos, manejo medico y quirúrgico', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 532, title: 'Medicina Interna II', date: '2026-06-30', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Manifestaciones oculares de alteraciones sistémicas', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 533, title: 'Medicina Interna II', date: '2026-06-30', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Manejo de emergencias oculares', teacher: 'R. Grandez', group: 'Ambos' },
+            { id: 534, title: 'EXAMEN FINAL - Medicina Interna II', date: '2026-07-12', startTime: '09:00', endTime: '11:00', type: 'virtual', topic: 'Evaluación Teórica Final', teacher: 'C. Miguel', group: 'Ambos' },
+
+            // PRÁCTICA CLÍNICA VETERINARIA II (Rotation A/B)
+            { id: 400, title: 'Práctica Clínica Veterinaria II', date: '2026-03-16', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 401, title: 'Práctica Clínica Veterinaria II', date: '2026-03-17', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 402, title: 'Práctica Clínica Veterinaria II', date: '2026-03-18', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 403, title: 'Práctica Clínica Veterinaria II', date: '2026-04-19', startTime: '09:00', endTime: '11:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 404, title: 'Práctica Clínica Veterinaria II', date: '2026-04-20', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 405, title: 'Práctica Clínica Veterinaria II', date: '2026-04-21', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 406, title: 'Práctica Clínica Veterinaria II', date: '2026-04-22', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica', teacher: 'Yurie Arias', group: 'A' },
+            { id: 413, title: 'Práctica Clínica Veterinaria II', date: '2026-03-23', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+            { id: 414, title: 'Práctica Clínica Veterinaria II', date: '2026-03-24', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+            { id: 415, title: 'Práctica Clínica Veterinaria II', date: '2026-03-25', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+            { id: 416, title: 'Práctica Clínica Veterinaria II', date: '2026-04-13', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+            { id: 417, title: 'Práctica Clínica Veterinaria II', date: '2026-04-14', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+            { id: 418, title: 'Práctica Clínica Veterinaria II', date: '2026-04-15', startTime: '08:00', endTime: '16:00', type: 'presencial', topic: 'Práctica Clínica (B)', teacher: 'Yurie Arias', group: 'B' },
+
+            // TÓPICOS SELECTOS
+            { id: 200, title: 'Tópicos Selectos', date: '2026-03-20', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Aproximación al paciente con alopecias endocrinas...', teacher: 'Chuquillanqui', group: 'Ambos' },
+            { id: 201, title: 'Tópicos Selectos', date: '2026-03-26', startTime: '19:00', endTime: '22:00', type: 'virtual', topic: 'Dermatitis atópica, test de alergias', teacher: 'Renzo Limas', group: 'Ambos' },
+            { id: 202, title: 'Tópicos Selectos', date: '2026-03-31', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Técnicas diagnostica en dermatología', teacher: 'Vanessa Llerena', group: 'Ambos' },
+            { id: 203, title: 'Tópicos Selectos', date: '2026-03-31', startTime: '20:00', endTime: '22:00', type: 'virtual', topic: 'Como discernir entre patologías dermatológicas...', teacher: 'Vanessa Llerena', group: 'Ambos' },
+            { id: 204, title: 'Tópicos Selectos', date: '2026-04-07', startTime: '18:00', endTime: '20:00', type: 'virtual', topic: 'Terapia tópicas en dermatopatias', teacher: 'Renzo Limas', group: 'Ambos' },
+            { id: 205, title: 'EXAMEN UNIDAD I - Tópicos Selectos', date: '2026-04-24', startTime: '19:00', endTime: '21:00', type: 'virtual', topic: 'Examen de la Unidad 1', teacher: 'MDP', group: 'Ambos' },
+
+            // TRABAJO ACADÉMICO II
+            { id: 300, title: 'Trabajo Académico II', date: '2026-03-16', startTime: '17:00', endTime: '21:00', type: 'presencial', topic: 'Resolución de un caso clínico mediante indagación progresiva: propuesta de la metodología; explicación el desarrollo del trabajo. Caso ejemplo.', teacher: 'Ricardo Grandez', group: 'Ambos' },
+            { id: 301, title: 'Entrega Informe 1', date: '2026-04-06', startTime: '23:59', endTime: '23:59', type: 'virtual', topic: 'Entrega de informe 1', teacher: 'Ricardo Grandez', group: 'Ambos' },
+            { id: 302, title: 'Trabajo Académico II', date: '2026-04-20', startTime: '17:00', endTime: '21:00', type: 'presencial', topic: 'Estructuración de una lista de problemas jerarquizada a partir de la anamnesis y hallazgos físicos iniciales; propuesta de diagnósticos diferenciales', teacher: 'Ricardo Grandez', group: 'Ambos' },
+            { id: 307, title: 'SUSTENTACIÓN II (Trabajo Académico II)', date: '2026-04-21', startTime: '17:00', endTime: '21:00', type: 'presencial', topic: 'OBLIGATORIO: Sustentación II de Casos Clínicos', teacher: 'Ricardo Grandez', group: 'Ambos' },
+            { id: 308, title: 'SUSTENTACIÓN III (Trabajo Académico II)', date: '2026-07-07', startTime: '17:00', endTime: '21:00', type: 'presencial', topic: 'OBLIGATORIO: Sustentación III de Casos Clínicos', teacher: 'Ricardo Grandez', group: 'Ambos' }
+        ];
+
+        // --- LÓGICA DE LA APP ---
+        let currentDate = new Date(2026, 2, 1);
+        let nextClass = null;
+        const groupSelect = document.getElementById('user-group-select');
+        groupSelect.value = Storage.getGroup();
+        let userGroup = groupSelect.value;
+        const countdownText = document.getElementById('countdown-text');
+        const nextClassInfo = document.getElementById('next-class-info');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const monthYearDisplay = document.getElementById('month-year-display');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalClassesList = document.getElementById('modal-classes-list');
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const courseDetailsView = document.getElementById('course-details-view');
+        const attendanceDashboardView = document.getElementById('attendance-dashboard-view');
+
+        function toggleSidebar() {
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('opacity-0', 'pointer-events-none'); } 
+            else { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none'); }
+        }
+
+        document.getElementById('btn-open-sidebar').onclick = toggleSidebar;
+        document.getElementById('btn-close-sidebar').onclick = toggleSidebar;
+        sidebarOverlay.onclick = toggleSidebar;
+
+        function openAttendanceDashboard() {
+            const attendanceData = Storage.getAttendance();
+            const container = document.getElementById('attendance-cards-container');
+            container.innerHTML = '';
+            const courseStats = {};
+            const now = new Date();
+
+            Object.values(coursesData).forEach(course => {
+                courseStats[course.name] = { present: 0, absent: 0, total: 0 };
+            });
+
+            mockClasses.forEach(cls => {
+                if ((cls.group === 'Ambos' || cls.group === userGroup) && new Date(cls.date) <= now) {
+                    const match = Object.values(coursesData).find(c => cls.title.toLowerCase().includes(c.name.toLowerCase()));
+                    const key = match ? match.name : cls.title;
+                    if (!courseStats[key]) courseStats[key] = { present: 0, absent: 0, total: 0 };
+                    courseStats[key].total++;
+                    const status = attendanceData[cls.id];
+                    if (status === 'presente') courseStats[key].present++;
+                    else if (status === 'ausente') courseStats[key].absent++;
+                }
+            });
+
+            let globalP = 0, globalA = 0;
+            Object.entries(courseStats).forEach(([title, stats]) => {
+                globalP += stats.present; globalA += stats.absent;
+                const percent = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0;
+                const r = 30, circ = 2 * Math.PI * r, off = circ - (percent / 100) * circ;
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 dark-transition";
+                card.innerHTML = `
+                    <div class="relative w-20 h-20 shrink-0"><svg class="w-full h-full"><circle class="text-gray-100 dark:text-gray-700" stroke-width="6" stroke="currentColor" fill="transparent" r="${r}" cx="40" cy="40"/><circle class="text-indigo-500 progress-ring__circle" stroke-width="6" stroke-dasharray="${circ} ${circ}" stroke-dashoffset="${off}" stroke-linecap="round" stroke="currentColor" fill="transparent" r="${r}" cx="40" cy="40"/></svg><div class="absolute inset-0 flex items-center justify-center text-sm font-black text-gray-800 dark:text-white">${percent}%</div></div>
+                    <div class="flex-1 overflow-hidden"><h4 class="font-bold text-gray-800 dark:text-gray-100 text-[11px] truncate uppercase tracking-tighter">${title}</h4><div class="flex gap-4 mt-2"><div><p class="text-[10px] text-gray-400 font-bold uppercase">Asistió</p><p class="text-green-500 font-black text-lg">${stats.present}</p></div><div><p class="text-[10px] text-gray-400 font-bold uppercase">Faltó</p><p class="text-red-500 font-black text-lg">${stats.absent}</p></div></div></div>`;
+                container.appendChild(card);
+            });
+            document.getElementById('total-present-count').innerText = globalP;
+            document.getElementById('total-absent-count').innerText = globalA;
+            toggleSidebar(); attendanceDashboardView.classList.remove('translate-x-full');
+        }
+
+        document.getElementById('btn-back-attendance').onclick = () => attendanceDashboardView.classList.add('translate-x-full');
+
+        function openCourseDetails(courseId) {
+            const data = coursesData[courseId];
+            if(!data) return;
+            document.getElementById('course-view-title').innerText = data.name;
+            document.getElementById('course-view-prof').innerText = data.professor;
+            document.getElementById('course-view-credits').innerText = data.credits;
+            document.getElementById('course-view-code').innerText = data.code;
+            const contentsUl = document.getElementById('course-view-contents');
+            contentsUl.innerHTML = '';
+            data.contents.forEach(item => { const li = document.createElement('li'); li.innerText = item; contentsUl.appendChild(li); });
+            const tbody = document.getElementById('course-view-eval-table');
+            tbody.innerHTML = ''; 
+            data.evaluations.forEach(eval => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-4 py-3 border-b border-gray-50 dark:border-gray-700 text-gray-700 dark:text-gray-300">${eval.activity}</td><td class="px-4 py-3 border-b border-gray-50 dark:border-gray-700 text-right font-medium text-indigo-600 dark:text-indigo-400">${eval.weight}</td>`;
+                tbody.appendChild(tr);
+            });
+            toggleSidebar(); courseDetailsView.classList.remove('translate-x-full');
+        }
+
+        document.getElementById('btn-back-course').onclick = () => courseDetailsView.classList.add('translate-x-full');
+
+        groupSelect.onchange = (e) => { userGroup = e.target.value; Storage.setGroup(userGroup); findNextClass(); renderCalendar(); };
+
+        function findNextClass() {
+            const now = new Date();
+            let upcoming = mockClasses
+                .filter(c => c.group === 'Ambos' || c.group === userGroup)
+                .map(c => ({ ...c, exactDate: new Date(`${c.date}T${c.startTime}:00`) }))
+                .filter(c => c.exactDate > now).sort((a, b) => a.exactDate - b.exactDate);
+            if (upcoming.length > 0) { nextClass = upcoming[0]; showNextClassInfo(nextClass); } 
+            else { nextClass = null; hideNextClassInfo(); }
+        }
+
+        function showNextClassInfo(cls) {
+            nextClassInfo.classList.remove('hidden');
+            document.getElementById('next-class-title').innerText = cls.title;
+            document.getElementById('next-class-time').innerText = cls.startTime;
+            document.getElementById('next-class-type').innerText = cls.type;
+            const iconContainer = document.getElementById('next-class-icon');
+            iconContainer.innerHTML = cls.type === 'presencial' ? '<i data-lucide="map-pin" class="w-4 h-4 text-green-300"></i>' : '<i data-lucide="monitor-play" class="w-4 h-4 text-blue-300"></i>';
+            lucide.createIcons();
+        }
+
+        function hideNextClassInfo() { nextClassInfo.classList.add('hidden'); }
+
+        function updateCountdown() {
+            if (!nextClass) { countdownText.innerText = 'Sin clases próximas'; return; }
+            const now = new Date();
+            const difference = nextClass.exactDate - now;
+            if (difference <= 0) { countdownText.innerText = '¡En clase!'; findNextClass(); return; }
+            const d = Math.floor(difference / (1000 * 60 * 60 * 24)), h = Math.floor((difference / (1000 * 60 * 60)) % 24), m = Math.floor((difference / 1000 / 60) % 60), s = Math.floor((difference / 1000) % 60);
+            countdownText.innerText = d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`;
+        }
+
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            monthYearDisplay.innerText = `${monthNames[m]} ${y}`;
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const firstDay = new Date(y, m, 1).getDay();
+            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const classes = mockClasses.filter(c => c.date === ds);
+                const dayDiv = document.createElement('div');
+                const isToday = today.getDate() === day && today.getMonth() === m && today.getFullYear() === y;
+                const hasC = classes.length > 0;
+                dayDiv.className = `p-2 flex flex-col items-center justify-center rounded-lg transition-all min-h-[55px] ${isToday ? 'bg-indigo-100 dark:bg-indigo-900 font-bold text-indigo-900 dark:text-indigo-100' : 'text-gray-700 dark:text-gray-300'} ${hasC ? 'cursor-pointer hover:bg-indigo-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 shadow-sm' : ''}`;
+                let inner = `<span class="text-xs">${day}</span>`;
+                if (hasC) {
+                    const myC = classes.filter(c => c.group === 'Ambos' || c.group === userGroup);
+                    let color = myC.length > 0 ? (myC.some(c => c.type === 'presencial') ? 'bg-green-500' : 'bg-blue-500') : 'bg-gray-300 dark:bg-gray-600';
+                    inner += `<div class="w-1.5 h-1.5 rounded-full mt-1 ${color}"></div>`;
+                    dayDiv.onclick = () => openModal(ds, classes);
+                }
+                dayDiv.innerHTML = inner; calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        document.getElementById('btn-prev-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
+        document.getElementById('btn-next-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+
+        function openModal(ds, classes) {
+            modalOverlay.classList.remove('hidden');
+            const dObj = new Date(ds + "T00:00:00");
+            document.getElementById('modal-date-title').innerText = `${dObj.getDate()} de ${monthNames[dObj.getMonth()]}`;
+            modalClassesList.innerHTML = '';
+            classes.forEach(cls => {
+                const isNotMy = cls.group !== 'Ambos' && cls.group !== userGroup;
+                const tagC = cls.type === 'presencial' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+                const zoomB = cls.type === 'virtual' ? `<a href="https://upch.zoom.us/j/93292082872" target="_blank" class="flex items-center justify-center gap-2 w-full py-2.5 mb-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md active:scale-[0.98]"><i data-lucide="video" class="w-4 h-4"></i>Zoom</a>` : '';
+                const card = document.createElement('div');
+                card.className = `${isNotMy ? 'opacity-50 grayscale' : 'bg-white dark:bg-gray-800'} p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700`;
+                card.innerHTML = `<div class="flex justify-between items-start mb-2"><h4 class="font-bold text-gray-800 dark:text-gray-100 text-[10px] uppercase tracking-tighter leading-tight flex-1 mr-2">${cls.title}</h4><span class="text-[9px] px-2 py-0.5 rounded-full font-bold ${tagC}">${cls.type.toUpperCase()}</span></div><div class="text-gray-600 dark:text-gray-300 text-[11px] mb-2 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 text-indigo-400"></i> ${cls.startTime} - ${cls.endTime}</div>${zoomB}<div class="text-gray-500 dark:text-gray-400 text-[10px] mb-3 italic leading-tight">${cls.topic}</div><div class="flex justify-between items-center text-[9px] font-bold"><span class="text-indigo-400">Grupo: ${cls.group}</span><span class="text-gray-400">Prof. ${cls.teacher}</span></div>`;
+                if (!isNotMy) {
+                    const foot = document.createElement('div'); foot.className = 'mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2';
+                    const btnP = document.createElement('button'); btnP.innerHTML = 'Asistí';
+                    const btnA = document.createElement('button'); btnA.innerHTML = 'Falté';
+                    const update = () => { const s = Storage.getAttendance()[cls.id]; btnP.className = `flex-1 py-1 rounded-[8px] text-[10px] font-bold border ${s === 'presente' ? 'bg-green-100 border-green-300 text-green-700' : 'border-gray-100 text-gray-400'}`; btnA.className = `flex-1 py-1 rounded-[8px] text-[10px] font-bold border ${s === 'ausente' ? 'bg-red-100 border-red-300 text-red-700' : 'border-gray-100 text-gray-400'}`; };
+                    btnP.onclick = () => { Storage.saveAttendance(cls.id, 'presente'); update(); }; btnA.onclick = () => { Storage.saveAttendance(cls.id, 'ausente'); update(); };
+                    update(); foot.appendChild(btnP); foot.appendChild(btnA); card.appendChild(foot);
+                }
+                modalClassesList.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        document.getElementById('btn-close-modal').onclick = () => modalOverlay.classList.add('hidden');
+        findNextClass(); renderCalendar(); setInterval(updateCountdown, 1000);
+
+        // Registrar el Service Worker para la PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrado con éxito');
+                    })
+                    .catch(err => {
+                        console.log('Error al registrar el ServiceWorker: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
