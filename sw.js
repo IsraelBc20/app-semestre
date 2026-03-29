@@ -1,4 +1,4 @@
-const CACHE_NAME = 'app-calendario-v2';
+const CACHE_NAME = 'app-calendario-v3';
 const urlsToCache = [
   './',
   './index.html',
@@ -27,5 +27,22 @@ self.addEventListener('fetch', event => {
         }
         return fetch(event.request); // Si no está guardado, lo busca en internet
       })
+  );
+});
+
+// Elimina las cachés antiguas cuando se activa una nueva versión
+self.addEventListener('activate', event => {
+  const cacheAllowlist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheAllowlist.indexOf(cacheName) === -1) {
+            // Si la caché no es la actual, la borra
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
