@@ -1,4 +1,4 @@
-const CACHE_NAME = 'app-calendario-v3';
+const CACHE_NAME = 'app-calendario-v4';
 const urlsToCache = [
   './',
   './index.html',
